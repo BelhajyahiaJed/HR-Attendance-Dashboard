@@ -12,12 +12,13 @@ import numpy as np
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
+import copy
 
 # --- Load config from Streamlit secrets ---
 try:
     config = {
-        "credentials": st.secrets["credentials"],
-        "cookie": st.secrets["cookie"]
+        "credentials": copy.deepcopy(st.secrets["credentials"]),
+        "cookie": copy.deepcopy(st.secrets["cookie"])
     }
 except Exception as e:
     st.error("Missing or invalid authentication configuration. Check secrets.")
@@ -32,7 +33,7 @@ authenticator = stauth.Authenticate(
 )
 
 # --- Perform login ---
-authenticator.login(location="main")
+authenticator.login(location='main')
 
 authentication_status = st.session_state.get("authentication_status")
 name = st.session_state.get("name")
@@ -45,14 +46,15 @@ elif authentication_status is None:
     st.warning("Please log in to access the dashboard.")
     st.stop()
 
-# --- Logout ---
+# User is authenticated
 authenticator.logout("Logout", "sidebar")
 st.sidebar.success(f"Welcome {name} 👋")
 
-# --- Your HR Dashboard Starts Below ---
-st.title("HR Attendance Dashboard")
+# --- Your Dashboard Code Goes Below ---
+# Paste your full dashboard content starting here
 
-# ... rest of your dashboard code ...
+# Example:
+st.title("HR Attendance Dashboard")
 
 st.markdown("""
 <style>
