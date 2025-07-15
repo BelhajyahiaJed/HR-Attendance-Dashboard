@@ -14,14 +14,12 @@ import yaml
 from yaml.loader import SafeLoader
 import copy
 
-# --- Load config from Streamlit secrets ---
+# --- Load config from config.yaml ---
 try:
-    config = {
-        "credentials": copy.deepcopy(st.secrets["credentials"]),
-        "cookie": copy.deepcopy(st.secrets["cookie"])
-    }
+    with open("config.yaml") as file:
+        config = yaml.load(file, Loader=SafeLoader)
 except Exception as e:
-    st.error("Missing or invalid authentication configuration. Check secrets.")
+    st.error("Failed to load authentication config. Check config.yaml.")
     st.stop()
 
 # --- Setup authenticator ---
@@ -49,10 +47,6 @@ elif authentication_status is None:
 # User is authenticated
 authenticator.logout("Logout", "sidebar")
 st.sidebar.success(f"Welcome {name} 👋")
-
-# --- Your Dashboard Code Goes Below ---
-# Paste your full dashboard content starting here
-
 # Example:
 st.title("HR Attendance Dashboard")
 
