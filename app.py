@@ -13,29 +13,26 @@ import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
-# --- Load config.yaml ---
-config_path = "config.yaml"
-if not os.path.exists(config_path):
-    st.error("Could not find config.yaml file.")
-    st.stop()
-
-with open(config_path, "r") as file:
-    config = yaml.safe_load(file)
-
-if config is None:
-    st.error("Could not load config.yaml. Please check its contents.")
+# --- Load config from Streamlit secrets ---
+try:
+    config = {
+        "credentials": st.secrets["credentials"],
+        "cookie": st.secrets["cookie"]
+    }
+except Exception as e:
+    st.error("Missing or invalid authentication configuration. Check secrets.")
     st.stop()
 
 # --- Setup authenticator ---
 authenticator = stauth.Authenticate(
-    credentials=config['credentials'],
-    cookie_name=config['cookie']['name'],
-    cookie_key=config['cookie']['key'],
-    cookie_expiry_days=config['cookie']['expiry_days']
+    credentials=config["credentials"],
+    cookie_name=config["cookie"]["name"],
+    cookie_key=config["cookie"]["key"],
+    cookie_expiry_days=config["cookie"]["expiry_days"]
 )
 
 # --- Perform login ---
-authenticator.login(location='main')
+authenticator.login(location="main")
 
 authentication_status = st.session_state.get("authentication_status")
 name = st.session_state.get("name")
@@ -48,9 +45,12 @@ elif authentication_status is None:
     st.warning("Please log in to access the dashboard.")
     st.stop()
 
-# User is authenticated
+# --- Logout ---
 authenticator.logout("Logout", "sidebar")
 st.sidebar.success(f"Welcome {name} 👋")
+
+# --- Your HR Dashboard Starts Below ---
+st.title("HR Attendance Dashboard")
 
 # ... rest of your dashboard code ...
 
