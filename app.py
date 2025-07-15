@@ -14,12 +14,11 @@ import yaml
 from yaml.loader import SafeLoader
 import copy
 
-# --- Load config from config.yaml ---
+# --- Load config from Streamlit secrets ---
 try:
-    with open("config.yaml") as file:
-        config = yaml.load(file, Loader=SafeLoader)
+    config = yaml.load(st.secrets["auth_config"]["yaml"], Loader=SafeLoader)
 except Exception as e:
-    st.error("Failed to load authentication config. Check config.yaml.")
+    st.error("Failed to load authentication config from secrets.")
     st.stop()
 
 # --- Setup authenticator ---
@@ -47,7 +46,6 @@ elif authentication_status is None:
 # User is authenticated
 authenticator.logout("Logout", "sidebar")
 st.sidebar.success(f"Welcome {name} 👋")
-# Example:
 st.title("HR Attendance Dashboard")
 
 st.markdown("""
