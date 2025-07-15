@@ -46,7 +46,7 @@ elif authentication_status is None:
 # User is authenticated
 authenticator.logout("Logout", "sidebar")
 st.sidebar.success(f"Welcome {name} 👋")
-st.title("HR Attendance Dashboard")
+
 
 st.markdown("""
 <style>
