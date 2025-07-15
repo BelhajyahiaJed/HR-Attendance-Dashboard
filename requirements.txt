@@ -4,4 +4,3 @@ plotly
 openpyxl
 numpy
 streamlit-authenticator
-yaml
