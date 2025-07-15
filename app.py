@@ -2,12 +2,484 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import io
+import os 
 from pandas import Timedelta
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
 import numpy as np
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+
+# --- Load config.yaml ---
+config_path = "config.yaml"
+if not os.path.exists(config_path):
+    st.error("Could not find config.yaml file.")
+    st.stop()
+
+with open(config_path, "r") as file:
+    config = yaml.safe_load(file)
+
+if config is None:
+    st.error("Could not load config.yaml. Please check its contents.")
+    st.stop()
+
+# --- Setup authenticator ---
+authenticator = stauth.Authenticate(
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    cookie_key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days']
+)
+
+# --- Perform login ---
+authenticator.login(location='main')
+
+authentication_status = st.session_state.get("authentication_status")
+name = st.session_state.get("name")
+username = st.session_state.get("username")
+
+if authentication_status is False:
+    st.error("Incorrect username or password.")
+    st.stop()
+elif authentication_status is None:
+    st.warning("Please log in to access the dashboard.")
+    st.stop()
+
+# User is authenticated
+authenticator.logout("Logout", "sidebar")
+st.sidebar.success(f"Welcome {name} 👋")
+
+# ... rest of your dashboard code ...
+
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Root variables for dark theme */
+    :root {
+        --primary-color: #6366f1;
+        --secondary-color: #8b5cf6;
+        --accent-color: #06b6d4;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --dark-bg: #0f172a;
+        --card-bg: #1e293b;
+        --sidebar-bg: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-accent: #e2e8f0;
+        --border-color: #475569;
+        --hover-bg: #2d3748;
+        --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+        --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Main app container with dark background */
+    .main {
+        background: var(--dark-bg);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text-primary);
+    }
+    
+    /* Content wrapper - dark card style */
+    .block-container {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        margin: 1rem auto;
+        max-width: 1200px;
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Title styling with gradient text */
+    h1 {
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+    
+    /* Subtitle styling */
+    .stApp > div > div > div > div > div:nth-child(2) {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Subheaders with better contrast */
+    h2, h3 {
+        color: var(--text-primary) !important;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Sidebar styling with dark theme */
+    .css-1d391kg, .st-emotion-cache-6qob1r, .st-emotion-cache-1cypcdb {
+        background: var(--sidebar-bg) !important;
+        border-radius: 15px;
+        margin: 1rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Sidebar header with high contrast */
+    .css-1d391kg h2, .st-emotion-cache-6qob1r h2, .st-emotion-cache-1cypcdb h2 {
+        color: var(--text-accent) !important;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Sidebar text with high contrast */
+    .css-1d391kg .stMarkdown, .st-emotion-cache-6qob1r .stMarkdown, .st-emotion-cache-1cypcdb .stMarkdown {
+        color: var(--text-accent) !important;
+    }
+    
+    .css-1d391kg p, .st-emotion-cache-6qob1r p, .st-emotion-cache-1cypcdb p {
+        color: var(--text-accent) !important;
+        font-weight: 500;
+    }
+    
+    /* Sidebar buttons with better styling */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%) !important;
+    }
+    
+    /* File uploader with dark theme */
+    .stFileUploader {
+        background: var(--hover-bg);
+        border: 2px dashed var(--primary-color);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin: 1rem 0;
+    }
+    
+    .stFileUploader:hover {
+        border-color: var(--secondary-color);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    }
+    
+    .stFileUploader label {
+        color: var(--text-primary) !important;
+        font-weight: 500;
+    }
+    
+    /* Upload button */
+    .stFileUploader button {
+        background: var(--gradient-primary) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stFileUploader button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    /* Dataframes with dark theme */
+    .stDataFrame {
+        background: var(--hover-bg);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        margin: 1rem 0;
+        border: 1px solid var(--border-color);
+    }
+    
+    .stDataFrame table {
+        background: var(--hover-bg) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .stDataFrame th {
+        background: var(--primary-color) !important;
+        color: white !important;
+        font-weight: 600;
+    }
+    
+    .stDataFrame td {
+        background: var(--hover-bg) !important;
+        color: var(--text-primary) !important;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .stDataFrame tr:hover td {
+        background: var(--card-bg) !important;
+    }
+    
+    /* Download button */
+    .stDownloadButton > button {
+        background: var(--gradient-success) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        margin: 1rem 0;
+    }
+    
+    .stDownloadButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Selectbox with dark theme */
+    .stSelectbox > div > div {
+        background: var(--hover-bg) !important;
+        border: 2px solid var(--border-color) !important;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .stSelectbox > div > div:hover {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    .stSelectbox label {
+        color: var(--text-primary) !important;
+        font-weight: 500;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] > div {
+        background: var(--hover-bg) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    /* Charts with dark theme */
+    .stPlotlyChart {
+        background: var(--hover-bg);
+        border-radius: 15px;
+        padding: 1rem;
+        box-shadow: var(--shadow);
+        margin: 1rem 0;
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Info boxes with dark theme */
+    .stInfo {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border-left: 4px solid var(--primary-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stInfo div {
+        color: var(--text-primary) !important;
+    }
+    
+    .stError {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+        border-left: 4px solid var(--error-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stError div {
+        color: var(--text-primary) !important;
+    }
+    
+    .stSuccess {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+        border-left: 4px solid var(--success-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stSuccess div {
+        color: var(--text-primary) !important;
+    }
+    
+    /* Text styling with proper contrast */
+    .stMarkdown {
+        color: var(--text-primary) !important;
+        line-height: 1.6;
+    }
+    
+    .stMarkdown p, .stMarkdown div {
+        color: var(--text-primary) !important;
+    }
+    
+    .stMarkdown strong {
+        color: var(--text-accent) !important;
+        font-weight: 600;
+    }
+    
+    /* Dividers with gradient */
+    hr {
+        border: none;
+        height: 2px;
+        background: var(--gradient-primary);
+        margin: 2rem 0;
+        border-radius: 1px;
+    }
+    
+    /* Metrics styling */
+    .metric-card {
+        background: var(--hover-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin: 1rem 0;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+    
+    /* Animation for loading */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .main > div {
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 1rem;
+            margin: 0.5rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+        }
+        
+        .stButton > button {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Custom scrollbar with dark theme */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--card-bg);
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--gradient-primary);
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--secondary-color);
+    }
+    
+    /* Ensure all text in main content is properly colored */
+    .stApp .main .block-container * {
+        color: var(--text-primary);
+    }
+    
+    /* Force sidebar text to be visible */
+    .css-1d391kg *, .st-emotion-cache-6qob1r *, .st-emotion-cache-1cypcdb * {
+        color: var(--text-accent) !important;
+    }
+    
+    /* Navigation text specifically */
+    .css-1d391kg .stButton label, .st-emotion-cache-6qob1r .stButton label, .st-emotion-cache-1cypcdb .stButton label {
+        color: white !important;
+        font-weight: 600;
+    }
+    
+    /* Fix for sidebar dividers */
+    .css-1d391kg hr, .st-emotion-cache-6qob1r hr, .st-emotion-cache-1cypcdb hr {
+        background: var(--text-accent) !important;
+        opacity: 0.3;
+    }
+    
+    /* Additional fixes for Streamlit components */
+    .stTextInput > div > div > input {
+        background: var(--hover-bg) !important;
+        color: var(--text-primary) !important;
+        border: 2px solid var(--border-color) !important;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    .stTextInput label {
+        color: var(--text-primary) !important;
+    }
+    
+    /* Fix for select dropdown options */
+    .stSelectbox div[data-baseweb="select"] div[role="listbox"] {
+        background: var(--hover-bg) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] div[role="option"] {
+        background: var(--hover-bg) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] div[role="option"]:hover {
+        background: var(--card-bg) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Function to process time formats (handle strings, Timedelta, and numbers)
 def clean_time_format(value):
@@ -108,7 +580,7 @@ def create_styled_excel(df, output_buffer):
     
     # Define header row
     headers = ["Matr", "Nom & Prénom", "Présence", "H Supp 75%", "Congé", "Congé spécial",
-               "Feries", "Chom Tech", "Prime de Rendement", "Avance sur salaire", "Prêt /Salaire", "Observations"]
+            "Feries", "Chom Tech", "Prime de Rendement", "Avance sur salaire", "Prêt /Salaire", "Observations"]
     
     # Group employees into chunks of 20
     chunk_size = 20
@@ -241,7 +713,7 @@ else:
         # Display processed data
         st.subheader("Processed Data")
         st.dataframe(filtered_df[['Matr', 'Nom & Prénom', 'Présence', 'H Supp 75%', 
-                                 'Congé', 'Feries', 'Chom Tech', 'Observations']])
+                                'Congé', 'Feries', 'Chom Tech', 'Observations']])
         
         # Download processed data
         output = io.BytesIO()
@@ -276,7 +748,7 @@ else:
         if not hourly_workers.empty:
             hourly_workers = hourly_workers.copy()
             hourly_workers['Z-Score'] = np.abs((hourly_workers['Présence'] - hourly_workers['Présence'].mean()) / 
-                                              hourly_workers['Présence'].std())
+                                            hourly_workers['Présence'].std())
             st.write("**Hourly Workers**")
             
             # Top 5 (highest presence)
@@ -293,7 +765,7 @@ else:
         if not daily_workers.empty:
             daily_workers = daily_workers.copy()
             daily_workers['Z-Score'] = np.abs((daily_workers['Présence'] - daily_workers['Présence'].mean()) / 
-                                             daily_workers['Présence'].std())
+                                            daily_workers['Présence'].std())
             st.write("**Daily Workers**")
             
             # Top 5 (highest presence)
