@@ -14,12 +14,22 @@ import yaml
 from yaml.loader import SafeLoader
 import copy
 
-# --- Load config from Streamlit secrets ---
-try:
-    config = yaml.load(st.secrets["auth_config"]["yaml"], Loader=SafeLoader)
-except Exception as e:
-    st.error("Failed to load authentication config from secrets.")
-    st.stop()
+
+config = {
+    "credentials": {
+        "usernames": {
+            "admin": {
+                "name": "Admin",
+                "password": "$2b$12$jJGRzmJvOlIaK7JniwhOu..sbIzFaUljC5pEbGY6IQg7cNbejpUiW"
+            }
+        }
+    },
+    "cookie": {
+        "name": "hr_dashboard",
+        "key": "random_secret_key_123",  
+        "expiry_days": 31
+    }
+}
 
 # --- Setup authenticator ---
 authenticator = stauth.Authenticate(
