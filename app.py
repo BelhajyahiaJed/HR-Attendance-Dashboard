@@ -18,25 +18,25 @@ import copy
 config = {
     "credentials": {
         "usernames": {
-            "admin": {
-                "name": "Admin",
-                "password": "$2b$12$jJGRzmJvOlIaK7JniwhOu..sbIzFaUljC5pEbGY6IQg7cNbejpUiW"
-            }
+            username: {
+                "name": user["name"],
+                "password": user["password"]
+            } for username, user in st.secrets["credentials"]["usernames"].items()
         }
     },
     "cookie": {
-        "name": "hr_dashboard",
-        "key": "random_secret_key_123",  
-        "expiry_days": 31
+        "name": st.secrets["cookie"]["name"],
+        "key": st.secrets["cookie"]["key"],
+        "expiry_days": int(st.secrets["cookie"]["expiry_days"])
     }
 }
 
-# --- Setup authenticator ---
+# Initialize authenticator
 authenticator = stauth.Authenticate(
-    credentials=config["credentials"],
-    cookie_name=config["cookie"]["name"],
-    cookie_key=config["cookie"]["key"],
-    cookie_expiry_days=config["cookie"]["expiry_days"]
+    config["credentials"],
+    config["cookie"]["name"],
+    config["cookie"]["key"],
+    config["cookie"]["expiry_days"]
 )
 
 # --- Perform login ---
